@@ -1,40 +1,31 @@
-log_info() {
-    echo "[INFO] $1"
-}
+#!/bin/bash
 
-log_error() {
-    echo "[ERROR] $1"
-}
+# Step 1: Build the React app
+echo "Building the React app..."
+npm install
+npm run build
 
-# 1. Check for Git changes, commit, and push
-log_info "Checking for changes in Git..."
-if [[ -n $(git status --porcelain) ]]; then
-    log_info "Changes detected. Staging, committing, and pushing to GitHub..."
-    git add .
-    git commit -m "Automated commit: $(date)"
-    git push origin $BRANCH
+# Step 2: Check if there are changes in the build folder to commit
+if [ -n "$(git status --porcelain build)" ]; then
+  echo "Changes detected in the build folder. Committing changes..."
+  git add .
+  git commit -m "Automated commit"
+  git push origin main
 else
-    log_info "No changes to commit."
+  echo "No changes to commit."
 fi
 
-# 2. Install dependencies and build the app
-log_info "Installing dependencies and building the app..."
-if command -v npm &> /dev/null; then
-    npm install
-    npm run build
-else
-    log_error "npm is not installed or not in PATH. Aborting."
-    exit 1
-fi
+# Step 3: Deploy the build folder to Google Cloud Storage using gcloud storage
+BUCKET_NAME="rani-kobliner-bucket2"  # Replace with your actual bucket name
+echo "Uploading build folder to Google Cloud Storage bucket: $BUCKET_NAME"
 
-# 3. Upload the built files to the GCS bucket
-log_info "Uploading files to GCS bucket: $GCS_BUCKET..."
-if gsutil -m cp -r $BUILD_DIR/* gs://$GCS_BUCKET/; then
-    log_info "Files successfully uploaded to GCS bucket."
-else
-    log_error "Failed to upload files to GCS bucket."
-    exit 1
-fi
+# This command uses `gcloud storage` and avoids any Python-related issues
+gcloud storage cp -r build/* gs://$BUCKET_NAME
 
-# Script complete
-log_info "Deployment process completed successfully."
+# Step 4: Verify deployment
+if [ $? -eq 0 ]; then
+  echo "Deployment completed successfully!"
+else
+  echo "Error: Failed to upload to Google Cloud Storage."
+  exit 1
+fi
