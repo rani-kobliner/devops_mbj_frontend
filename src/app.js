@@ -14,7 +14,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Good evening to Shani Kazenelenbogen</h1>
+        <h1>Good evening to Shani Kazenel</h1>
         <button onClick={fetchData} className="fetch-button">Fetch backend</button>
         <p>{message}</p>
       </header>
